@@ -136,7 +136,7 @@ int send_to_server(const uint8_t *encoded_data, size_t data_size,
     char *json_payload;
     long response_code;
 
-    printf("DEBUG: Starting server upload. Data size: %zu\n", data_size);
+    // printf("DEBUG: Starting server upload. Data size: %zu\n", data_size);
 
     // Base64 encode the audio data
     base64_data = base64_encode(encoded_data, data_size);
@@ -145,15 +145,13 @@ int send_to_server(const uint8_t *encoded_data, size_t data_size,
         fprintf(stderr, "Failed to base64 encode data\n");
         return -1;
     }
-    printf("DEBUG: Base64 encoding complete\n");
+    // printf("DEBUG: Base64 encoding complete\n");
 
     // Format timestamp as ISO 8601
     char timestamp_str[30];
     struct tm *tm_info = localtime(&timestamp);
     strftime(timestamp_str, sizeof(timestamp_str), "%Y-%m-%dT%H:%M:%SZ", tm_info);
 
-    // Allocate memory for JSON payload
-    // Calculate required size more accurately
     size_t json_size = strlen(base64_data) + strlen(device_id) + strlen(timestamp_str) + 200;
     json_payload = malloc(json_size);
     if (!json_payload)
@@ -175,7 +173,7 @@ int send_to_server(const uint8_t *encoded_data, size_t data_size,
         return -1;
     }
 
-    printf("DEBUG: JSON payload created (length: %d)\n", written);
+    // printf("DEBUG: JSON payload created (length: %d)\n", written);
 
     curl = curl_easy_init();
     if (curl)
@@ -197,9 +195,7 @@ int send_to_server(const uint8_t *encoded_data, size_t data_size,
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
 
         // Enable verbose output for debugging
-        curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
-
-        printf("DEBUG: Sending request to server\n");
+        // curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
 
         // Perform request
         res = curl_easy_perform(curl);
@@ -217,7 +213,7 @@ int send_to_server(const uint8_t *encoded_data, size_t data_size,
             printf("DEBUG: Server response code: %ld\n", response_code);
 
             // Print the first 100 characters of the payload for debugging
-            printf("DEBUG: First 100 chars of payload: %.100s...\n", json_payload);
+            // printf("DEBUG: First 100 chars of payload: %.100s...\n", json_payload);
         }
 
         // Cleanup
@@ -292,8 +288,8 @@ int process_full_second(prediction_buffer_t *buffer)
 
     double average = 0.0;
     double features[7];
-    double signal_buffer[192000];
-    double filtered_buffer[192000];
+    double signal_buffer[PREDICTION_BUFFER_SIZE];
+    double filtered_buffer[PREDICTION_BUFFER_SIZE];
 
     // Convert to double and normalize
     for (int i = 0; i < PREDICTION_BUFFER_SIZE; i++)
@@ -341,7 +337,7 @@ int process_full_second(prediction_buffer_t *buffer)
         {
             arg_max = i;
         }
-    }   
+    }
     for (int i = 0; i < 3; i++)
     {
         printf("Prediction score %d: %f\n", i, softmax_scores[i]);
@@ -533,7 +529,6 @@ int process_full_second(prediction_buffer_t *buffer)
         // Send encoded data to server
         if (encoding_success && encoded_buffer_size > 0)
         {
-            printf("DEBUG: Sending %zu bytes of encoded audio to server\n", encoded_buffer_size);
             const char *device_id = "device_id";
             const char *api_key = "key1";
 
@@ -543,11 +538,11 @@ int process_full_second(prediction_buffer_t *buffer)
                 fprintf(stderr, "Failed to send audio to server\n");
             }
         }
-        else
-        {
-            printf("DEBUG: No data to send: success=%d, size=%zu\n",
-                   encoding_success, encoded_buffer_size);
-        }
+        // else
+        // {
+        //     printf("DEBUG: No data to send: success=%d, size=%zu\n",
+        //            encoding_success, encoded_buffer_size);
+        // }
 
     cleanup:
         if (encoded_buffer)

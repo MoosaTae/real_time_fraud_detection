@@ -35,4 +35,5 @@ bool handle_temperature(const char *params, void *context);
 bool handle_start_recording(const char *params, void *context);
 bool handle_stop_recording(const char *params, void *context);
 bool handle_recording_status(const char *params, void *context);
+bool handle_deploy_model(const char *params, void *context);
 #endif

@@ -65,35 +65,55 @@ bool handle_temperature(const char *params, void *context)
     return true;
 }
 
-
-bool handle_start_recording(const char *params, void *context) {
+bool handle_start_recording(const char *params, void *context)
+{
     start_recording();
-    
+
     // Publish status message back to MQTT
     mqtt_context_t *mqtt = (mqtt_context_t *)context;
     const char *status_msg = "{\"status\": \"recording_started\"}";
     mqtt_publish(mqtt, "status", status_msg);
-    
+
     return true;
 }
 
-bool handle_stop_recording(const char *params, void *context) {
+bool handle_stop_recording(const char *params, void *context)
+{
     stop_recording();
-    
+
     // Publish status message back to MQTT
     mqtt_context_t *mqtt = (mqtt_context_t *)context;
     const char *status_msg = "{\"status\": \"recording_stopped\"}";
     mqtt_publish(mqtt, "status", status_msg);
-    
+
     return true;
 }
 
-bool handle_recording_status(const char *params, void *context) {
+bool handle_recording_status(const char *params, void *context)
+{
     mqtt_context_t *mqtt = (mqtt_context_t *)context;
     char status_msg[100];
-    snprintf(status_msg, sizeof(status_msg), 
-             "{\"status\": \"recording_%s\"}", 
+    snprintf(status_msg, sizeof(status_msg),
+             "{\"status\": \"recording_%s\"}",
              is_recording() ? "active" : "inactive");
     mqtt_publish(mqtt, "status", status_msg);
+    return true;
+}
+
+bool handle_deploy_model(const char *params, void *context)
+{
+    char *url = strdup(params);
+    printf("Downloading model from: %s\n", url);
+
+    char command[256];
+    snprintf(command, sizeof(command), "wget -O file.zip %s", url);
+    system(command);
+    // check file is downlaod
+    if (access("file.zip", F_OK) == -1)
+    {
+        printf("Failed to download model\n");
+        return false;
+    }
+    system("unzip file -d download");
     return true;
 }

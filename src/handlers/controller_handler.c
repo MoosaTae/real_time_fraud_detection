@@ -37,7 +37,8 @@ void *controller_thread_function(void *arg)
     register_command_handler(&controller, "start_recording", handle_start_recording, "Start audio recording");
     register_command_handler(&controller, "stop_recording", handle_stop_recording, "Stop audio recording");
     register_command_handler(&controller, "recording_status", handle_recording_status, "Get recording status");
-    
+    register_command_handler(&controller, "deploy", handle_deploy_model, "Deploy model to edge device");
+
     while (queue->running)
     {
         if (dequeue_command(queue, &cmd))
@@ -54,3 +55,8 @@ void *controller_thread_function(void *arg)
 
     return NULL;
 }
+
+// {
+//     "command": "deploy",
+//     "params": "url"
+// }
