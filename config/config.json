@@ -1,0 +1,15 @@
+{
+    "mqtt": {
+        "broker": "localhost",
+        "port": 1883
+    },
+    "database": {
+        "host": "localhost",
+        "port": 5432,
+        "name": "sound_db"
+    },
+    "sound_detection": {
+        "threshold": 0.75,
+        "sample_rate": 44100
+    }
+}
