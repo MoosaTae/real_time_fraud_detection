@@ -92,7 +92,6 @@ void *mqtt_subscriber_thread(void *arg)
     }
     while (queue->running)
     {
-        printf("Waiting for messages...\n");
         char *topicName = NULL;
         int topicLen;
         MQTTClient_message *message = NULL;

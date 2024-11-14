@@ -28,22 +28,6 @@ pthread_t controller_thread;
 // MQTT context
 mqtt_context_t mqtt_ctx;
 
-typedef enum
-{
-    MODE_IDLE = 0,
-    MODE_RECORDING = 1,
-    MODE_PREDICTION = 2,
-    MODE_TRAINING = 3
-} SystemMode;
-
-typedef struct
-{
-    volatile SystemMode current_mode;
-    pthread_mutex_t mode_mutex;
-    pthread_cond_t mode_changed;
-    int thread_count; // Number of active threads
-} ModeManager;
-
 // Function prototypes
 void *controller_thread_function(void *arg);
 void cleanup_resources(void);
