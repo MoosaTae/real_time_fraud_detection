@@ -8,6 +8,11 @@
         "db_handler.h": "c",
         "sqlite3.h": "c",
         "mqtt_handler.h": "c",
-        "unistd.h": "c"
+        "unistd.h": "c",
+        "pthread.h": "c",
+        "string.h": "c",
+        "stdlib.h": "c",
+        "stdbool.h": "c",
+        "cjson.h": "c"
     }
 }

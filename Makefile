@@ -1,22 +1,25 @@
 CC = gcc
-CFLAGS = -Wall -Werror -I./include
-LDFLAGS = -lpthread -lmosquitto -lsqlite3 -lcjson
+CFLAGS = -Wall -Werror -g -I./include
 
+LIBS = -lpthread -lpaho-mqtt3c -lsqlite3 -lcjson
+
+TARGETS = command_service main_service
 SOURCES = $(wildcard main/*.c src/*/*.c)
 OBJECTS = $(SOURCES:.c=.o)
-
-TARGETS = command_service sound_service
 
 all: $(TARGETS)
 
 command_service: main/command_main.o $(filter-out main/service_main.o,$(OBJECTS))
-	$(CC) -o $@ $^ $(LDFLAGS)
+	$(CC) -o $@ $^ $(LIBS)
 
-sound_service: main/service_main.o $(filter-out main/command_main.o,$(OBJECTS))
-	$(CC) -o $@ $^ $(LDFLAGS)
+main_service: main/service_main.o $(filter-out main/command_main.o,$(OBJECTS))
+	$(CC) -o $@ $^ $(LIBS)
+
+$(TARGET): $(OBJS)
+	$(CC) $(CFLAGS) -o $(TARGET) $(OBJS) $(LIBS)
 
 %.o: %.c
-	$(CC) $(CFLAGS) -c -o $@ $
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
 	rm -f $(OBJECTS) $(TARGETS)

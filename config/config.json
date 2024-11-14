@@ -1,7 +1,10 @@
 {
     "mqtt": {
-        "broker": "localhost",
-        "port": 1883
+        "broker": "tcp://your-mqtt-broker.fly.dev",
+        "port": 1883,
+        "subscribe_topic": "commands",
+        "publish_topic": "sound_detection",
+        "clientId": "Testasdsadas"
     },
     "database": {
         "host": "localhost",
@@ -10,6 +13,6 @@
     },
     "sound_detection": {
         "threshold": 0.75,
-        "sample_rate": 44100
+        "sample_rate": 48000
     }
 }
