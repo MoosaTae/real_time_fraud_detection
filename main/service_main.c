@@ -8,8 +8,8 @@
 #include "handlers/db_handler.h"
 #include "handlers/mqtt_handler.h"
 #include "handlers/controller_handler.h"
-// #include "services/sound_service.h"
-// #include "services/model_service.h"
+#include "services/sound_service.h"
+#include "services/model_service.h"
 #include "utils/config.h"
 #include "utils/logger.h"
 
@@ -38,26 +38,15 @@ int initialize_system(void);
 // Initialize system components
 int initialize_system(void)
 {
-    // // Initialize logging
-    // if (init_logger(config.db_connection) != 0)
-    // {
-    //     fprintf(stderr, "Failed to initialize logger\n");
-    //     return -1;
-    // }
-
-    // // Initialize sound service
-    // if (init_sound_service(config.sample_size) != 0)
-    // {
-    //     fprintf(stderr, "Failed to initialize sound service\n");
-    //     return -1;
-    // }
+    // Initialize sound service
+    if (init_sound_service(config.device, config.sample_size) != 0)
+    {
+        fprintf(stderr, "Failed to initialize sound service\n");
+        return -1;
+    }
 
     // Initialize model service
-    // if (init_model_service() != 0)
-    // {
-    //     fprintf(stderr, "Failed to initialize model service\n");
-    //     return -1;
-    // }
+    init_model_service();
 
     // Initialize MQTT handler
     printf("Initializing MQTT handler\n");
@@ -127,8 +116,8 @@ int main(int argc, char *argv[])
     init_command_queue(&cmd_queue);
 
     // Create threads
-    // pthread_create(&sound_thread, NULL, sound_service_thread, NULL);
-    // pthread_create(&model_thread, NULL, model_service_thread, NULL);
+    pthread_create(&sound_thread, NULL, sound_service_thread, NULL);
+    pthread_create(&model_thread, NULL, model_service_thread, NULL);
     pthread_create(&mqtt_thread, NULL, mqtt_subscriber_thread, &cmd_queue);
     pthread_create(&controller_thread, NULL, controller_thread_function, &cmd_queue);
 

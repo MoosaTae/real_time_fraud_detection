@@ -15,6 +15,7 @@
         "stdbool.h": "c",
         "cjson.h": "c",
         "controller_handler.h": "c",
-        "command_handler.h": "c"
+        "command_handler.h": "c",
+        "model_service.h": "c"
     }
 }

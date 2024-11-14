@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -Wall -Werror -g -I./include
 
-LIBS = -lpthread -lpaho-mqtt3c -lsqlite3 -lcjson
+LIBS = -lpthread -lpaho-mqtt3c -lsqlite3 -lcjson -lasound
 
 TARGETS = command_service service_main
 TARGETS = service_main

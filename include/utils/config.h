@@ -14,6 +14,7 @@ typedef struct
 
     int sample_size;
     int buffer_size;
+    char *device;
 
     char *model_path;
 } config_t;
