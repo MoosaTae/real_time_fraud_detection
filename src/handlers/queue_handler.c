@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include "handlers/mqtt_handler.h"
+#include "handlers/db_handler.h"
 
 void init_command_queue(CommandQueue *queue)
 {
@@ -31,9 +32,11 @@ bool enqueue_command(CommandQueue *queue, const char *command, const char *param
         queue->rear = (queue->rear + 1) % MAX_QUEUE_SIZE;
         strncpy(queue->commands[queue->rear].command, command, MAX_COMMAND_LENGTH - 1);
         strncpy(queue->commands[queue->rear].params, params, MAX_COMMAND_LENGTH - 1);
+        char event_json[512];
+        sprintf(event_json, "{\"command\":\"%s\",\"params\":\"%s\"}", command, params);
+        log_command_event(COMMAND_DB_NAME, event_json);
         queue->commands[queue->rear].timestamp = time(NULL);
         queue->count++;
-
         pthread_cond_signal(&queue->not_empty);
         result = true;
     }
@@ -90,9 +93,9 @@ void print_command_queue(CommandQueue *queue)
     for (int i = 0; i < queue->count; i++)
     {
         int index = (queue->front + i) % MAX_QUEUE_SIZE;
-        printf("Command: %s, Params: %s, Timestamp: %ld\n", 
-               queue->commands[index].command, 
-               queue->commands[index].params, 
+        printf("Command: %s, Params: %s, Timestamp: %ld\n",
+               queue->commands[index].command,
+               queue->commands[index].params,
                queue->commands[index].timestamp);
     }
 

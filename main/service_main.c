@@ -5,7 +5,7 @@
 #include <unistd.h>
 #include <pthread.h>
 // #include <sqlite3.h>
-// #include "handlers/db_handler.h"
+#include "handlers/db_handler.h"
 #include "handlers/mqtt_handler.h"
 #include "handlers/controller_handler.h"
 // #include "services/sound_service.h"
@@ -117,6 +117,11 @@ int main(int argc, char *argv[])
         fprintf(stderr, "System initialization failed\n");
         return EXIT_FAILURE;
     }
+
+    // sound_event_db_init(SOUND_DB_NAME);
+    // system_event_db_init(SYSTEM_DB_NAME);
+    // model_event_db_init(MODEL_DB_NAME);
+    command_event_db_init(COMMAND_DB_NAME);
 
     CommandQueue cmd_queue;
     init_command_queue(&cmd_queue);
