@@ -1,0 +1,20 @@
+{
+    "mqtt": {
+        "broker": "broker.emqx.io",
+        "port": 1883,
+        "subscribe_topic": "commands",
+        "publish_topic": "sound_detection",
+        "clientId": "Testasdsadas"
+    },
+    "database": {
+        "host": "localhost",
+        "port": 5432,
+        "name": "sound_db"
+    },
+    "sound_detection": {
+        "threshold": 0.75,
+        "sample_rate": 48000,
+        "buffer_size": 24000,
+        "device": "plughw:2,0"
+    }
+}

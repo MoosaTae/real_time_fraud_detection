@@ -1,0 +1,23 @@
+{
+    "files.associations": {
+        "signal.h": "c",
+        "stdio.h": "c",
+        "sound_service.h": "c",
+        "logger.h": "c",
+        "config.h": "c",
+        "db_handler.h": "c",
+        "sqlite3.h": "c",
+        "mqtt_handler.h": "c",
+        "unistd.h": "c",
+        "pthread.h": "c",
+        "string.h": "c",
+        "stdlib.h": "c",
+        "stdbool.h": "c",
+        "cjson.h": "c",
+        "controller_handler.h": "c",
+        "command_handler.h": "c",
+        "model_service.h": "c",
+        "channel_layout.h": "c",
+        "buffer.h": "c"
+    }
+}
