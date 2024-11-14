@@ -67,25 +67,24 @@ int initialize_system(void)
 void cleanup_resources(void)
 {
     // Cancel and join threads
-    // pthread_cancel(sound_thread);
-    // pthread_cancel(model_thread);
+    pthread_cancel(sound_thread);
+    pthread_cancel(model_thread);
     pthread_cancel(mqtt_thread);
     pthread_cancel(controller_thread);
 
-    // pthread_join(sound_thread, NULL);
-    // pthread_join(model_thread, NULL);
+    pthread_join(sound_thread, NULL);
+    pthread_join(model_thread, NULL);
     pthread_join(mqtt_thread, NULL);
     pthread_join(controller_thread, NULL);
 
     // Cleanup mutexes
-    // pthread_mutex_destroy(&mode_mutex);
+    pthread_mutex_destroy(&mode_mutex);
     pthread_mutex_destroy(&resource_mutex);
 
     // Cleanup services
-    // cleanup_sound_service();
-    // cleanup_model_service();
+    cleanup_sound_service();
+    cleanup_model_service();
     mqtt_cleanup(&mqtt_ctx);
-    // cleanup_logger();
 }
 
 int main(int argc, char *argv[])

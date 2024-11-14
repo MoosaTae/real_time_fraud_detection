@@ -72,13 +72,13 @@ int process_full_second(prediction_buffer_t *buffer)
     {
         sum += abs(buffer->data[i]);
     }
-    float average = sum / PREDICTION_BUFFER_SIZE;
+    printf("Buffer filled: %lu\n", buffer->filled);
 
-    if (average > 2000.0f)
-    {
-        printf("Significant audio activity detected in second\n");
-        printf("Buffer filled: %lu\n", buffer->filled);
-    }
+    // if (average > 2000.0f)
+    // {
+    //     printf("Significant audio activity detected in second\n");
+    //     printf("Buffer filled: %lu\n", buffer->filled);
+    // }
     return 0;
 }
 
