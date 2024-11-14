@@ -18,8 +18,20 @@
 
 static bool running = false;
 static audio_ring_buffer_t *audio_buffer = NULL;
+static mqtt_context_t mqtt_ctx;
 
-static mqtt_context_t mqtt_ctx; // Add MQTT context
+// High pass filter state and coefficients
+static double prev_input = 0.0;
+static double prev_output = 0.0;
+#define ALPHA 0.9 // Smoothing factor (0 < alpha < 1), lower = more filtering
+
+static double apply_high_pass_filter(double input, double *prev_input, double *prev_output)
+{
+    double output = ALPHA * (*prev_output + input - *prev_input);
+    *prev_input = input;
+    *prev_output = output;
+    return output;
+}
 
 void init_model_service()
 {
@@ -111,6 +123,7 @@ char *base64_encode(const unsigned char *input, int length)
 
     return base64Text;
 }
+
 // Function to send audio data to server
 int send_to_server(const uint8_t *encoded_data, size_t data_size,
                    const char *device_id, time_t timestamp,
@@ -280,6 +293,7 @@ int process_full_second(prediction_buffer_t *buffer)
     double average = 0.0;
     double features[7];
     double signal_buffer[192000];
+    double filtered_buffer[192000];
 
     // Convert to double and normalize
     for (int i = 0; i < PREDICTION_BUFFER_SIZE; i++)
@@ -289,17 +303,27 @@ int process_full_second(prediction_buffer_t *buffer)
     }
     average /= PREDICTION_BUFFER_SIZE;
 
+    // Apply high pass filter to the normalized signal
+    prev_input = signal_buffer[0]; // Initialize with first sample
+    prev_output = 0.0;             // Initialize previous output
+    for (int i = 0; i < PREDICTION_BUFFER_SIZE; i++)
+    {
+        filtered_buffer[i] = apply_high_pass_filter(signal_buffer[i], &prev_input, &prev_output);
+    }
+
     double prediction_score[3];
     cell_wrap_0 predictions[1];
     predictions[0].f1.size[0] = 1;
     predictions[0].f1.size[1] = 12;
 
     for (int i = 0; i < 192000; i++)
-        if (signal_buffer[i] > buffer->max_amplitude)
+        if (filtered_buffer[i] > buffer->max_amplitude)
         {
-            buffer->max_amplitude = signal_buffer[i];
+            buffer->max_amplitude = filtered_buffer[i];
         }
-    extractFeatures(signal_buffer, (double)SAMPLE_RATE, features);
+
+    // Use filtered signal for feature extraction
+    extractFeatures(filtered_buffer, (double)SAMPLE_RATE, features);
 
     predictRealTime(features, (double)SAMPLE_RATE, predictions,
                     prediction_score);
@@ -317,7 +341,7 @@ int process_full_second(prediction_buffer_t *buffer)
         {
             arg_max = i;
         }
-    }
+    }   
     for (int i = 0; i < 3; i++)
     {
         printf("Prediction score %d: %f\n", i, softmax_scores[i]);
@@ -334,7 +358,7 @@ int process_full_second(prediction_buffer_t *buffer)
              now, average, arg_max, softmax_scores[0]);
 
     mqtt_publish(&mqtt_ctx, "audio/predictions", payload);
-
+    log_system_event(MODEL_DB_NAME, payload);
     const float THRESHOLD = 2000.0f;
     if (average > THRESHOLD)
     {

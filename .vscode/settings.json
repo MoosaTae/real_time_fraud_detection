@@ -18,6 +18,7 @@
         "command_handler.h": "c",
         "model_service.h": "c",
         "channel_layout.h": "c",
-        "buffer.h": "c"
+        "buffer.h": "c",
+        "avcodec.h": "c"
     }
 }

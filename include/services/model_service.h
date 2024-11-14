@@ -4,7 +4,7 @@
 #include "sound_service.h"
 #include "handlers/mqtt_handler.h" // Add this include
 #define SAMPLE_RATE 48000
-#define PREDICTION_BUFFER_SIZE 96000
+#define PREDICTION_BUFFER_SIZE (SAMPLE_RATE * 4)
 #ifndef MIN
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 #endif
