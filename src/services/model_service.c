@@ -1,6 +1,3 @@
-#ifndef MODEL_SERVICE_C
-#define MODEL_SERVICE_C
-
 #include "services/model_service.h"
 #include "services/sound_service.h"
 #include <stdio.h>
@@ -25,6 +22,7 @@ void init_model_service()
 void *model_service_thread(void *arg)
 {
     audio_block_t block;
+    prediction_buffer_t pred_buffer = {0};
 
     while (running)
     {
@@ -33,50 +31,80 @@ void *model_service_thread(void *arg)
         {
             break;
         }
+        size_t remaining = PREDICTION_BUFFER_SIZE - pred_buffer.filled;
+        size_t to_copy = MIN(AUDIO_BLOCK_SIZE, remaining);
 
-        // Process the audio block
-        if (process_audio_sample(&block) != 0)
+        memcpy(pred_buffer.data + pred_buffer.filled,
+               block.data,
+               to_copy * sizeof(int16_t));
+
+        pred_buffer.filled += to_copy;
+
+        if (pred_buffer.filled >= PREDICTION_BUFFER_SIZE)
         {
-            fprintf(stderr, "Error processing audio block\n");
-            continue;
+            if (process_full_second(&pred_buffer) != 0)
+            {
+                fprintf(stderr, "Error processing audio block\n");
+                continue;
+            }
+
+            size_t overlap = AUDIO_BLOCK_SIZE; // For overlapping windows
+            memmove(pred_buffer.data,
+                    pred_buffer.data + PREDICTION_BUFFER_SIZE - overlap,
+                    overlap * sizeof(int16_t));
+            pred_buffer.filled = overlap;
         }
     }
 
     return NULL;
 }
 
-int process_audio_sample(const audio_block_t *block)
+int process_full_second(prediction_buffer_t *buffer)
 {
-    if (!block)
+    if (!buffer)
     {
         return -1;
     }
 
-    // TODO: Implement your model processing logic here
-    // This is where you would apply your sound detection model
-    // to the audio data in block->data
-
-    // Example processing placeholder
+    // Mock processing
     float sum = 0.0f;
-    for (int i = 0; i < AUDIO_BLOCK_SIZE; i++)
+    for (int i = 0; i < PREDICTION_BUFFER_SIZE; i++)
     {
-        sum += abs(block->data[i]);
+        sum += abs(buffer->data[i]);
     }
-    float average = sum / AUDIO_BLOCK_SIZE;
+    float average = sum / PREDICTION_BUFFER_SIZE;
 
-    // Log only if significant audio activity detected
     if (average > 2000.0f)
     {
-        printf("Significant audio activity detected at timestamp: %lu\n",
-               block->timestamp);
+        printf("Significant audio activity detected in second\n");
+        printf("Buffer filled: %lu\n", buffer->filled);
     }
-
     return 0;
 }
+
+// int mock_process_audio_sample(const audio_block_t *block)
+// {
+//     if (!block)
+//     {
+//         return -1;
+//     }
+
+//     float sum = 0.0f;
+//     for (int i = 0; i < AUDIO_BLOCK_SIZE; i++)
+//     {
+//         sum += abs(block->data[i]);
+//     }
+//     float average = sum / AUDIO_BLOCK_SIZE;
+
+//     if (average > 2000.0f)
+//     {
+//         printf("Significant audio activity detected at timestamp: %lu\n",
+//                block->timestamp);
+//     }
+//     return 0;
+// }
 
 void cleanup_model_service()
 {
     running = false;
 }
-
-#endif // MODEL_SERVICE_C

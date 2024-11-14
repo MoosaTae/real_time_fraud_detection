@@ -14,7 +14,7 @@
     "sound_detection": {
         "threshold": 0.75,
         "sample_rate": 48000,
-        "buffer_size": 4096,
+        "buffer_size": 24000,
         "device": "plughw:2,0"
     }
 }

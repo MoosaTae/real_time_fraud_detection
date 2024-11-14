@@ -5,10 +5,12 @@
 #include <stdint.h>
 #include <stdbool.h>    
 #include <stdlib.h>
+#include <math.h>
+#include <string.h>
 
-// Buffer size is 4 processing blocks (4 * 4096 samples)
+// Buffer size is 4 processing blocks (4 * 24000 samples)
 // This gives model service time to process while new samples arrive
-// At 48kHz, 4096 samples = 85.3ms of audio
+// At 48kHz, 24000 samples = 85.3ms of audio
 // Total ring buffer = 341.2ms of audio
 #define AUDIO_BLOCK_SIZE 4096
 #define NUM_BLOCKS 4
