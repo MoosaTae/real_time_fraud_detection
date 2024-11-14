@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <cjson/cJSON.h>
+#include <utils/logger.h>
 
 #define MQTT_TIMEOUT 10000L
 

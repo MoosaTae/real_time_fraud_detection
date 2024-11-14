@@ -81,12 +81,12 @@ void cleanup_resources(void)
     // pthread_cancel(sound_thread);
     // pthread_cancel(model_thread);
     pthread_cancel(mqtt_thread);
-    // pthread_cancel(controller_thread);
+    pthread_cancel(controller_thread);
 
     // pthread_join(sound_thread, NULL);
     // pthread_join(model_thread, NULL);
     pthread_join(mqtt_thread, NULL);
-    // pthread_join(controller_thread, NULL);
+    pthread_join(controller_thread, NULL);
 
     // Cleanup mutexes
     // pthread_mutex_destroy(&mode_mutex);
