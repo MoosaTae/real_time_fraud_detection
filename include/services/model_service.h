@@ -2,7 +2,8 @@
 #define MODEL_SERVICE_H
 
 #include "sound_service.h"
-#include "handlers/mqtt_handler.h"  // Add this include
+#include "handlers/mqtt_handler.h" // Add this include
+#define SAMPLE_RATE 48000
 #define PREDICTION_BUFFER_SIZE 96000
 #ifndef MIN
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
@@ -12,6 +13,7 @@ typedef struct
 {
     int16_t data[PREDICTION_BUFFER_SIZE];
     size_t filled; // Number of samples accumulated
+    double max_amplitude;
 } prediction_buffer_t;
 // Initialize the model service
 void init_model_service();
