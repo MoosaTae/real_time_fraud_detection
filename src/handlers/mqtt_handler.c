@@ -7,18 +7,6 @@
 
 #define MQTT_TIMEOUT 10000L
 
-// static int on_message(void *context, char *topicName, int topicLen, MQTTClient_message *message)
-// {
-//     mqtt_callback_t callback = (mqtt_callback_t)context;
-//     if (callback)
-//     {
-//         callback(topicName, message->payload);
-//     }
-//     MQTTClient_freeMessage(&message);
-//     MQTTClient_free(topicName);
-//     return 1; // Return 1 to indicate successful handling
-// }
-
 bool mqtt_init(mqtt_context_t *ctx, const char *broker, const char *client_id)
 {
     if (!ctx || !broker || !client_id)
@@ -182,69 +170,4 @@ void mqtt_cleanup(mqtt_context_t *ctx)
         free(ctx->topic);
         ctx->topic = NULL;
     }
-}
-
-void init_command_queue(CommandQueue *queue)
-{
-    queue->front = 0;
-    queue->rear = -1;
-    queue->count = 0;
-    queue->running = true;
-    pthread_mutex_init(&queue->mutex, NULL);
-    pthread_cond_init(&queue->not_empty, NULL);
-    pthread_cond_init(&queue->not_full, NULL);
-}
-
-bool enqueue_command(CommandQueue *queue, const char *command, const char *params)
-{
-    bool result = false;
-
-    pthread_mutex_lock(&queue->mutex);
-
-    // Wait while queue is full and system is running
-    while (queue->count >= MAX_QUEUE_SIZE && queue->running)
-    {
-        pthread_cond_wait(&queue->not_full, &queue->mutex);
-    }
-
-    if (queue->running)
-    {
-        queue->rear = (queue->rear + 1) % MAX_QUEUE_SIZE;
-        strncpy(queue->commands[queue->rear].command, command, MAX_COMMAND_LENGTH - 1);
-        strncpy(queue->commands[queue->rear].params, params, MAX_COMMAND_LENGTH - 1);
-        queue->commands[queue->rear].timestamp = time(NULL);
-        queue->count++;
-
-        pthread_cond_signal(&queue->not_empty);
-        result = true;
-    }
-
-    pthread_mutex_unlock(&queue->mutex);
-    return result;
-}
-
-bool dequeue_command(CommandQueue *queue, Command *cmd)
-{
-    bool result = false;
-
-    pthread_mutex_lock(&queue->mutex);
-
-    // Wait while queue is empty and system is running
-    while (queue->count == 0 && queue->running)
-    {
-        pthread_cond_wait(&queue->not_empty, &queue->mutex);
-    }
-
-    if (queue->count > 0)
-    {
-        *cmd = queue->commands[queue->front];
-        queue->front = (queue->front + 1) % MAX_QUEUE_SIZE;
-        queue->count--;
-
-        pthread_cond_signal(&queue->not_full);
-        result = true;
-    }
-
-    pthread_mutex_unlock(&queue->mutex);
-    return result;
 }

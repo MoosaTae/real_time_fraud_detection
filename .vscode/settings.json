@@ -13,6 +13,8 @@
         "string.h": "c",
         "stdlib.h": "c",
         "stdbool.h": "c",
-        "cjson.h": "c"
+        "cjson.h": "c",
+        "controller_handler.h": "c",
+        "command_handler.h": "c"
     }
 }

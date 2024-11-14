@@ -7,6 +7,7 @@
 // #include <sqlite3.h>
 // #include "handlers/db_handler.h"
 #include "handlers/mqtt_handler.h"
+#include "handlers/controller_handler.h"
 // #include "services/sound_service.h"
 // #include "services/model_service.h"
 #include "utils/config.h"
@@ -71,36 +72,6 @@ int initialize_system(void)
     }
 
     return 0;
-}
-
-void *controller_thread_function(void *arg)
-{
-    CommandQueue *queue = (CommandQueue *)arg;
-    Command cmd;
-
-    while (queue->running)
-    {
-        if (dequeue_command(queue, &cmd))
-        {
-            printf("Processing command: %s with params: %s\n",
-                   cmd.command, cmd.params);
-        }
-    }
-
-    return NULL;
-}
-
-void cleanup_command_queue(CommandQueue *queue)
-{
-    pthread_mutex_lock(&queue->mutex);
-    queue->running = false;
-    pthread_cond_broadcast(&queue->not_empty);
-    pthread_cond_broadcast(&queue->not_full);
-    pthread_mutex_unlock(&queue->mutex);
-
-    pthread_mutex_destroy(&queue->mutex);
-    pthread_cond_destroy(&queue->not_empty);
-    pthread_cond_destroy(&queue->not_full);
 }
 
 // Cleanup system resources

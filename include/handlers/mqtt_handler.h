@@ -50,5 +50,6 @@ bool enqueue_command(CommandQueue *queue, const char *command, const char *param
 bool dequeue_command(CommandQueue *queue, Command *cmd);
 void init_command_queue(CommandQueue *queue);
 void cleanup_command_queue(CommandQueue *queue);
+void print_command_queue(CommandQueue *queue);
 
 #endif // MQTT_HANDLER_H
