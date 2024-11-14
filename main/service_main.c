@@ -117,8 +117,8 @@ int main(int argc, char *argv[])
     // Create threads
     pthread_create(&sound_thread, NULL, sound_service_thread, NULL);
     pthread_create(&model_thread, NULL, model_service_thread, NULL);
-    pthread_create(&mqtt_thread, NULL, mqtt_subscriber_thread, &cmd_queue);
-    pthread_create(&controller_thread, NULL, controller_thread_function, &cmd_queue);
+    // pthread_create(&mqtt_thread, NULL, mqtt_subscriber_thread, &cmd_queue);
+    // pthread_create(&controller_thread, NULL, controller_thread_function, &cmd_queue);
 
     // Main loop
     while (running)

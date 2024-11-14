@@ -16,6 +16,14 @@
         "cjson.h": "c",
         "controller_handler.h": "c",
         "command_handler.h": "c",
-        "model_service.h": "c"
+        "model_service.h": "c",
+        "modwt.h": "c",
+        "extractfeatures.h": "c",
+        "predictrealtime.h": "c",
+        "predictrealtime_types.h": "c",
+        "fftimplementationcallback.h": "c",
+        "rt_nonfinite.h": "c",
+        "rtwtypes.h": "c",
+        "rtgetnan.h": "c"
     }
 }
