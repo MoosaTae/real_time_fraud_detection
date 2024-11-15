@@ -2,6 +2,7 @@
 #include "services/sound_service.h"
 #include "handlers/db_handler.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdbool.h>
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
@@ -11,6 +12,7 @@
 #include <openssl/bio.h>
 #include <openssl/evp.h>
 #include <openssl/buffer.h>
+#include <math.h>
 #include "handlers/command_handler.h"
 #include "handlers/mqtt_handler.h"
 #include "extract/extractFeatures.h"
@@ -19,6 +21,11 @@
 static bool running = false;
 static audio_ring_buffer_t *audio_buffer = NULL;
 static mqtt_context_t mqtt_ctx;
+
+// Mutexes for thread safety
+static pthread_mutex_t extract_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t predict_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t recording_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // High pass filter state and coefficients
 static double prev_input = 0.0;
@@ -59,8 +66,7 @@ void init_model_service()
 void *model_service_thread(void *arg)
 {
     audio_block_t block;
-    prediction_buffer_t pred_buffer = {0};
-    pred_buffer.max_amplitude = 8000.0;
+    prediction_buffer_t pred_buffer = {.data = {0}, .filled = 0, .max_amplitude = 8000.0};
 
     while (running)
     {
@@ -99,7 +105,33 @@ void *model_service_thread(void *arg)
     return NULL;
 }
 
-// Function to base64 encode data
+static bool recording_enabled = true;
+
+void start_recording()
+{
+    pthread_mutex_lock(&recording_mutex);
+    recording_enabled = true;
+    printf("Recording started\n");
+    pthread_mutex_unlock(&recording_mutex);
+}
+
+void stop_recording()
+{
+    pthread_mutex_lock(&recording_mutex);
+    recording_enabled = false;
+    printf("Recording stopped\n");
+    pthread_mutex_unlock(&recording_mutex);
+}
+
+bool is_recording()
+{
+    bool status;
+    pthread_mutex_lock(&recording_mutex);
+    status = recording_enabled;
+    pthread_mutex_unlock(&recording_mutex);
+    return status;
+}
+
 char *base64_encode(const unsigned char *input, int length)
 {
     BIO *bio, *b64;
@@ -124,7 +156,6 @@ char *base64_encode(const unsigned char *input, int length)
     return base64Text;
 }
 
-// Function to send audio data to server
 int send_to_server(const uint8_t *encoded_data, size_t data_size,
                    const char *device_id, time_t timestamp,
                    const char *api_key)
@@ -136,8 +167,6 @@ int send_to_server(const uint8_t *encoded_data, size_t data_size,
     char *json_payload;
     long response_code;
 
-    // printf("DEBUG: Starting server upload. Data size: %zu\n", data_size);
-
     // Base64 encode the audio data
     base64_data = base64_encode(encoded_data, data_size);
     if (!base64_data)
@@ -145,8 +174,6 @@ int send_to_server(const uint8_t *encoded_data, size_t data_size,
         fprintf(stderr, "Failed to base64 encode data\n");
         return -1;
     }
-    // printf("DEBUG: Base64 encoding complete\n");
-
     // Format timestamp as ISO 8601
     char timestamp_str[30];
     struct tm *tm_info = localtime(&timestamp);
@@ -173,8 +200,6 @@ int send_to_server(const uint8_t *encoded_data, size_t data_size,
         return -1;
     }
 
-    // printf("DEBUG: JSON payload created (length: %d)\n", written);
-
     curl = curl_easy_init();
     if (curl)
     {
@@ -195,8 +220,6 @@ int send_to_server(const uint8_t *encoded_data, size_t data_size,
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
 
         // Enable verbose output for debugging
-        // curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
-
         // Perform request
         res = curl_easy_perform(curl);
 
@@ -213,7 +236,6 @@ int send_to_server(const uint8_t *encoded_data, size_t data_size,
             printf("DEBUG: Server response code: %ld\n", response_code);
 
             // Print the first 100 characters of the payload for debugging
-            // printf("DEBUG: First 100 chars of payload: %.100s...\n", json_payload);
         }
 
         // Cleanup
@@ -225,34 +247,6 @@ int send_to_server(const uint8_t *encoded_data, size_t data_size,
     free(json_payload);
 
     return (res == CURLE_OK && response_code == 200) ? 0 : -1;
-}
-
-static bool recording_enabled = true;
-static pthread_mutex_t recording_mutex = PTHREAD_MUTEX_INITIALIZER;
-
-void start_recording()
-{
-    pthread_mutex_lock(&recording_mutex);
-    recording_enabled = true;
-    printf("Recording started\n");
-    pthread_mutex_unlock(&recording_mutex);
-}
-
-void stop_recording()
-{
-    pthread_mutex_lock(&recording_mutex);
-    recording_enabled = false;
-    printf("Recording stopped\n");
-    pthread_mutex_unlock(&recording_mutex);
-}
-
-bool is_recording()
-{
-    bool status;
-    pthread_mutex_lock(&recording_mutex);
-    status = recording_enabled;
-    pthread_mutex_unlock(&recording_mutex);
-    return status;
 }
 
 void softmax(double *input, int length, double *output)
@@ -294,8 +288,8 @@ int process_full_second(prediction_buffer_t *buffer)
     // Convert to double and normalize
     for (int i = 0; i < PREDICTION_BUFFER_SIZE; i++)
     {
-        average += abs(buffer->data[i]);
-        signal_buffer[i] = buffer->data[i] / buffer->max_amplitude;
+        average += (double)abs((int)buffer->data[i]);
+        signal_buffer[i] = (double)buffer->data[i] / buffer->max_amplitude;
     }
     average /= PREDICTION_BUFFER_SIZE;
 
@@ -312,17 +306,23 @@ int process_full_second(prediction_buffer_t *buffer)
     predictions[0].f1.size[0] = 1;
     predictions[0].f1.size[1] = 12;
 
-    for (int i = 0; i < 192000; i++)
+    for (int i = 0; i < PREDICTION_BUFFER_SIZE; i++)
+    {
         if (filtered_buffer[i] > buffer->max_amplitude)
         {
             buffer->max_amplitude = filtered_buffer[i];
         }
+    }
 
-    // Use filtered signal for feature extraction
+    // Lock for feature extraction
+    pthread_mutex_lock(&extract_mutex);
     extractFeatures(filtered_buffer, (double)SAMPLE_RATE, features);
+    pthread_mutex_unlock(&extract_mutex);
 
-    predictRealTime(features, (double)SAMPLE_RATE, predictions,
-                    prediction_score);
+    // Lock for prediction
+    pthread_mutex_lock(&predict_mutex);
+    predictRealTime(features, (double)SAMPLE_RATE, predictions, prediction_score);
+    pthread_mutex_unlock(&predict_mutex);
 
     // Handle prediction results
     printf("Predictions: %s\n", predictions[0].f1.data);
@@ -336,6 +336,7 @@ int process_full_second(prediction_buffer_t *buffer)
         if (softmax_scores[i] > confidence)
         {
             arg_max = i;
+            confidence = softmax_scores[i];
         }
     }
     for (int i = 0; i < 3; i++)
@@ -532,17 +533,9 @@ int process_full_second(prediction_buffer_t *buffer)
             const char *device_id = "device_id";
             const char *api_key = "key1";
 
-            if (send_to_server(encoded_buffer, encoded_buffer_size,
-                               device_id, detection_time, api_key) != 0)
-            {
-                fprintf(stderr, "Failed to send audio to server\n");
-            }
+            send_to_server(encoded_buffer, encoded_buffer_size,
+                           device_id, detection_time, api_key);
         }
-        // else
-        // {
-        //     printf("DEBUG: No data to send: success=%d, size=%zu\n",
-        //            encoding_success, encoded_buffer_size);
-        // }
 
     cleanup:
         if (encoded_buffer)
@@ -593,4 +586,9 @@ void cleanup_model_service()
 
     // Cleanup MQTT context
     mqtt_cleanup(&mqtt_ctx);
+
+    // Destroy mutexes
+    pthread_mutex_destroy(&extract_mutex);
+    pthread_mutex_destroy(&predict_mutex);
+    pthread_mutex_destroy(&recording_mutex);
 }
