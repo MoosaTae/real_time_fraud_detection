@@ -1,6 +1,6 @@
 # Audio Processing and Prediction System
 
-This repository is a real-time fraud detecion system implemented in **C**, deployed **raspberry pi 5**. The system is designed to extract features from audio signals, make real-time fraud predictions using a machine learning model, and communicate results via MQTT. It also includes support for sending data to a remote server using cURL.
+This repository is a real-time fraud detecion system implemented in **C**, deployed **raspberry pi 5**. The system is designed to extract features from audio signals, make real-time fraud predictions using a machine learning model, and communicate results via MQTT. It also includes support for sending data to a remote server using cURL. (builded in 1 day for this hackathon. 😵‍💫)
 
 ## Features
 
