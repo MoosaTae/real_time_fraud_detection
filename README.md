@@ -92,3 +92,10 @@ To run the service, execute the following command:
 ```sh
 ./service_main
 ```
+
+### Contributor
+
+-   [Yok](https://github.com/xXpeira12) Machine Learning (Model)
+-   [Pun](https://github.com/punchanabu) Server Programming (setup communication and dashboard)
+-   [Gun](https://github.com/RuffLogix) Machine Learning (Overview)
+-   [ChinChin](https://github.com/Cchinchillaz) Machine Learning (Preprocessing)
